@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Mommy 'n Me 2026</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ["Plus Jakarta Sans", "sans-serif"] },
+          colors: {
+            indigo: {
+              50:  "#eef2ff", 100: "#e0e7ff", 200: "#c7d2fe",
+              300: "#a5b4fc", 400: "#818cf8", 500: "#6366f1",
+              600: "#6366f1", 700: "#4338ca", 800: "#3730a3", 900: "#312e81"
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * { font-family: "Plus Jakarta Sans", sans-serif; }
+    body { background-color: #f8fafc; }
+
+    /* Sidebar scroll */
+    #sidebar { height: 100vh; overflow-y: auto; scrollbar-width: thin; }
+    #main-content { height: 100vh; overflow-y: auto; }
+
+    /* Loading overlay */
+    #loadingOverlay {
+      position: fixed; inset: 0;
+      background: rgba(248,250,252,0.92);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 9999; backdrop-filter: blur(4px);
+    }
+    .spinner {
+      width: 52px; height: 52px;
+      border: 4px solid #e0e7ff;
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Active nav */
+    .nav-item { transition: all 0.15s ease; }
+    .nav-item.active {
+      background: #eef2ff;
+      color: #6366f1;
+      font-weight: 600;
+    }
+    .nav-item.active .nav-icon { color: #6366f1; }
+
+    /* Card hover */
+    .metric-card { transition: box-shadow 0.2s ease, transform 0.2s ease; }
+    .metric-card:hover { box-shadow: 0 8px 24px rgba(99,102,241,0.1); transform: translateY(-2px); }
+
+    /* Table striped */
+    .data-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .data-table tbody tr:hover { background: #eef2ff; }
+
+    /* Badge colors */
+    .badge-credit     { background:#ede9fe; color:#6d28d9; }
+    .badge-debit      { background:#dbeafe; color:#1d4ed8; }
+    .badge-qrcredit   { background:#fce7f3; color:#be185d; }
+    .badge-qrnoncredit{ background:#fef3c7; color:#b45309; }
+    .badge-tapcash    { background:#d1fae5; color:#065f46; }
+    .badge-onus       { background:#ede9fe; color:#5b21b6; }
+    .badge-offus      { background:#fce7f3; color:#9d174d; }
+
+    /* Growth positive/negative */
+    .growth-pos { color: #16a34a; }
+    .growth-neg { color: #dc2626; }
+
+    /* Scrollable table containers */
+    .table-scroll { overflow-x: auto; max-height: 340px; overflow-y: auto; }
+    .table-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+    .table-scroll::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 99px; }
+
+    /* Page transition */
+    .page { display: none; }
+    .page.active { display: block; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+  <!-- ===================== LOADING OVERLAY ===================== -->
+  <div id="loadingOverlay">
+    <div class="spinner mb-5"></div>
+    <p class="text-indigo-600 font-semibold text-sm tracking-wide">Memuat data dashboard…</p>
+    <p class="text-slate-400 text-xs mt-1">Mohon tunggu, mengambil data real-time</p>
+  </div>
+
+  <!-- ===================== WRAPPER ===================== -->
+  <div class="flex h-screen">
+
+    <!-- ===================== SIDEBAR ===================== -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-slate-100 flex flex-col shadow-sm flex-shrink-0">
+
+      <!-- Logo area -->
+      <div class="px-6 py-5 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+          <!-- BNI Logo — ganti URL di bawah dengan URL logo BNI resmi jika tersedia -->
+          <img src="https://crystalpng.com/wp-content/uploads/2025/12/Bank-Negara-Indonesia-Logo-01.png"
+               alt="BNI Logo" class="h-8 object-contain" />
+          <div>
+            <p class="text-xs font-bold text-indigo-600 leading-tight">Dashboard</p>
+            <p class="text-[11px] text-slate-400 leading-tight">Mommy 'n Me 2026</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 px-3 py-4 space-y-1">
+        <p class="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2">Overview</p>
+        <button onclick="navigateTo('home')" class="nav-item active w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600" data-page="home">
+          <i data-lucide="layout-dashboard" class="nav-icon w-4 h-4 text-slate-400"></i>
+          <span>Semua Hall</span>
+        </button>
+
+        <p class="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-widest mt-4 mb-2">Per Hall</p>
+        <button onclick="navigateTo('main-lobby')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600" data-page="main-lobby">
+          <i data-lucide="building-2" class="nav-icon w-4 h-4 text-slate-400"></i>
+          <span>Main Lobby</span>
+        </button>
+        <button onclick="navigateTo('assembly')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600" data-page="assembly">
+          <i data-lucide="users" class="nav-icon w-4 h-4 text-slate-400"></i>
+          <span>Assembly</span>
+        </button>
+        <button onclick="navigateTo('plenary')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600" data-page="plenary">
+          <i data-lucide="presentation" class="nav-icon w-4 h-4 text-slate-400"></i>
+          <span>Plenary</span>
+        </button>
+        <button onclick="navigateTo('cendrawasih')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600" data-page="cendrawasih">
+          <i data-lucide="feather" class="nav-icon w-4 h-4 text-slate-400"></i>
+          <span>Cendrawasih</span>
+        </button>
+        <button onclick="navigateTo('hall-a')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600" data-page="hall-a">
+          <i data-lucide="door-open" class="nav-icon w-4 h-4 text-slate-400"></i>
+          <span>Hall A</span>
+        </button>
+        <button onclick="navigateTo('hall-b')" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600" data-page="hall-b">
+          <i data-lucide="door-open" class="nav-icon w-4 h-4 text-slate-400"></i>
+          <span>Hall B</span>
+        </button>
+      </nav>
+
+      <!-- Sync button -->
+      <div class="px-4 pb-5 pt-2 border-t border-slate-100">
+        <button onclick="syncData()" id="syncBtn"
+          class="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 px-4 rounded-xl transition-colors">
+          <i data-lucide="refresh-cw" class="w-4 h-4" id="syncIcon"></i>
+          Sinkronisasi Real-time
+        </button>
+        <p id="lastUpdatedLabel" class="text-center text-[10px] text-slate-400 mt-2"></p>
+      </div>
+    </aside>
+
+    <!-- ===================== MAIN CONTENT ===================== -->
+    <main id="main-content" class="flex-1 overflow-y-auto bg-slate-50">
+
+      <!-- ===================== PAGE: HOME (All Halls) ===================== -->
+      <div id="page-home" class="page active">
+        <!-- BANNER HEADER -->
+        <!-- ============================================================
+             PANDUAN KUSTOMISASI BANNER:
+             Ganti URL pada atribut `src` di bawah ini dengan URL gambar
+             banner Anda. Ukuran gambar yang disarankan: 1440 x 200 px.
+             Format: JPG/PNG/WebP. Anda bisa upload ke Google Drive,
+             set sharing ke "Anyone with link", lalu gunakan direct link.
+             ============================================================ -->
+        <div class="w-full">
+          <img src="https://www.imbex.co.id/content/dam/sitebuilder/rxid/imbex/2026/MnM26-hero-banner.png/_jcr_content/renditions/original.image_file.1919.937.file/696721184/MnM26-hero-banner.png"
+               alt="Banner Dashboard" class="w-full object-cover" style="max-height:180px;" />
+        </div>
+
+        <div class="px-6 py-6 space-y-6">
+
+          <!-- Page Title -->
+          <div class="flex items-center justify-between">
+            <div>
+              <h1 class="text-2xl font-bold text-slate-800">Semua Hall — Overview</h1>
+              <p class="text-sm text-slate-400 mt-0.5">Agregasi global seluruh data transaksi</p>
+            </div>
+            <span id="home-badge" class="text-xs bg-indigo-50 text-indigo-600 font-semibold px-3 py-1 rounded-full border border-indigo-100">Live Data</span>
+          </div>
+
+          <!-- METRIC CARDS ROW -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" id="home-metric-cards">
+            <!-- injected by JS -->
+          </div>
+
+          <!-- TIME SERIES CHART -->
+          <div class="bg-white rounded-2xl shadow-sm p-5">
+            <h2 class="font-semibold text-slate-700 mb-1">Tren Volume Transaksi Harian</h2>
+            <p class="text-xs text-slate-400 mb-4">Tahun 2025 vs Tahun 2024</p>
+            <canvas id="home-timeseries-chart" height="110"></canvas>
+          </div>
+
+          <!-- BAR CHART -->
+          <div class="bg-white rounded-2xl shadow-sm p-5">
+            <h2 class="font-semibold text-slate-700 mb-1">Volume per Tipe Kartu (Stacked ON US / OFF US)</h2>
+            <p class="text-xs text-slate-400 mb-4">Tahun 2025 vs Tahun 2024</p>
+            <canvas id="home-bar-chart" height="120"></canvas>
+          </div>
+
+          <!-- GROWTH YoY CARDS -->
+          <div>
+            <h2 class="font-semibold text-slate-700 mb-3">Growth Year-on-Year</h2>
+            <div class="grid grid-cols-2 xl:grid-cols-4 gap-4" id="home-growth-cards">
+              <!-- injected by JS -->
+            </div>
+          </div>
+
+          <!-- DOUGHNUT CHARTS -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="bg-white rounded-2xl shadow-sm p-5">
+              <h2 class="font-semibold text-slate-700 mb-1">Frekuensi per Alat Bayar — Tahun 2025</h2>
+              <p class="text-xs text-slate-400 mb-4">Distribusi transaksi berdasarkan jenis kartu</p>
+              <div class="flex items-center gap-6">
+                <div class="w-48 h-48 flex-shrink-0"><canvas id="home-donut-new"></canvas></div>
+                <div id="home-donut-new-legend" class="flex-1 space-y-2 text-sm"></div>
+              </div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm p-5">
+              <h2 class="font-semibold text-slate-700 mb-1">Frekuensi per Alat Bayar — Tahun 2024</h2>
+              <p class="text-xs text-slate-400 mb-4">Distribusi transaksi berdasarkan jenis kartu</p>
+              <div class="flex items-center gap-6">
+                <div class="w-48 h-48 flex-shrink-0"><canvas id="home-donut-old"></canvas></div>
+                <div id="home-donut-old-legend" class="flex-1 space-y-2 text-sm"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SPECIAL CARDS: Akuisisi & Ticket -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="home-special-cards">
+            <!-- injected by JS -->
+          </div>
+
+          <!-- TABLES GRID -->
+          <!-- Row 1: Top10 vs Bottom10 Merchant -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="bg-white rounded-2xl shadow-sm p-5">
+              <h3 class="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Top 10 Merchant (Volume Tertinggi)
+              </h3>
+              <div class="table-scroll"><table id="home-top10-table" class="data-table w-full text-xs"></table></div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm p-5">
+              <h3 class="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-red-400"></span> 10 Loser Merchant (Volume Terendah)
+              </h3>
+              <div class="table-scroll"><table id="home-bot10-table" class="data-table w-full text-xs"></table></div>
+            </div>
+          </div>
+
+          <!-- Row 2: Top10 ON US vs OFF US -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="bg-white rounded-2xl shadow-sm p-5">
+              <h3 class="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <span class="badge-onus text-[10px] font-semibold px-2 py-0.5 rounded-full">ON US</span> Top 10 Transaksi
+              </h3>
+              <div class="table-scroll"><table id="home-onus-table" class="data-table w-full text-xs"></table></div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm p-5">
+              <h3 class="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <span class="badge-offus text-[10px] font-semibold px-2 py-0.5 rounded-full">OFF US</span> Top 10 Transaksi
+              </h3>
+              <div class="table-scroll"><table id="home-offus-table" class="data-table w-full text-xs"></table></div>
+            </div>
+          </div>
+
+          <!-- Row 3: Top10 Credit vs Debit -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div class="bg-white rounded-2xl shadow-sm p-5">
+              <h3 class="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <span class="badge-credit text-[10px] font-semibold px-2 py-0.5 rounded-full">Credit</span> Top 10 Transaksi
+              </h3>
+              <div class="table-scroll"><table id="home-credit-table" class="data-table w-full text-xs"></table></div>
+            </div>
+            <div class="bg-white rounded-2xl shadow-sm p-5">
+              <h3 class="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <span class="badge-debit text-[10px] font-semibold px-2 py-0.5 rounded-full">Debit</span> Top 10 Transaksi
+              </h3>
+              <div class="table-scroll"><table id="home-debit-table" class="data-table w-full text-xs"></table></div>
+            </div>
+          </div>
+
+          <!-- Row 4: Full-width Acquisition Table -->
+          <div class="bg-white rounded-2xl shadow-sm p-5">
+            <h3 class="font-semibold text-slate-700 mb-3">Ringkasan Data Akuisisi Merchant (Semua Hall)</h3>
+            <div class="table-scroll"><table id="home-acq-table" class="data-table w-full text-xs"></table></div>
+          </div>
+
+        </div><!-- end px-6 -->
+
+        <!-- FOOTER -->
+        <footer id="home-footer"></footer>
+      </div><!-- end page-home -->
+
+
+      <!-- ===================== SUB PAGES (Main Lobby, Assembly, …) ===================== -->
+      <!-- Generated dynamically for each hall -->
+      <div id="page-main-lobby"  class="page"></div>
+      <div id="page-assembly"    class="page"></div>
+      <div id="page-plenary"     class="page"></div>
+      <div id="page-cendrawasih" class="page"></div>
+      <div id="page-hall-a"      class="page"></div>
+      <div id="page-hall-b"      class="page"></div>
+
+    </main>
+  </div><!-- end flex wrapper -->
+
+
+  <script>
+  // ================================================================
+  // GLOBAL STATE
+  // ================================================================
+  var dashData     = null;
+  var chartInstances = {};
+
+  var PAGE_HALL_MAP = {
+    "home":        "ALL",
+    "main-lobby":  "MAIN LOBBY",
+    "assembly":    "ASSEMBLY",
+    "plenary":     "PLENARY",
+    "cendrawasih": "CENDRAWASIH",
+    "hall-a":      "HALL A",
+    "hall-b":      "HALL B"
+  };
+
+  var PAGE_LABELS = {
+    "home":        "Semua Hall — Overview",
+    "main-lobby":  "Main Lobby",
+    "assembly":    "Assembly",
+    "plenary":     "Plenary",
+    "cendrawasih": "Cendrawasih",
+    "hall-a":      "Hall A",
+    "hall-b":      "Hall B"
+  };
+
+  var CARD_COLORS = {
+    "Credit":        { bg:"#ede9fe", fg:"#6d28d9" },
+    "Debit":         { bg:"#dbeafe", fg:"#1d4ed8" },
+    "QR Credit":     { bg:"#fce7f3", fg:"#be185d" },
+    "QR Non Credit": { bg:"#fef3c7", fg:"#b45309" },
+    "TapCash":       { bg:"#d1fae5", fg:"#065f46" }
+  };
+
+  var PASTEL = ["#a78bfa","#60a5fa","#fb923c","#34d399","#f9a8d4"];
+
+  // ================================================================
+  // NAVIGATION
+  // ================================================================
+  function navigateTo(pageId) {
+    document.querySelectorAll(".page").forEach(function(el){ el.classList.remove("active"); });
+    document.querySelectorAll(".nav-item").forEach(function(el){ el.classList.remove("active"); });
+
+    var pageEl = document.getElementById("page-" + pageId);
+    if (pageEl) pageEl.classList.add("active");
+
+    var btn = document.querySelector("[data-page='" + pageId + "']");
+    if (btn) btn.classList.add("active");
+
+    document.getElementById("main-content").scrollTop = 0;
+
+    // Build sub page if data loaded & not home
+    if (dashData && pageId !== "home") {
+      buildSubPage(pageId);
+    }
+  }
+
+  // ================================================================
+  // SYNC / LOAD DATA
+  // ================================================================
+  function syncData() {
+    showLoading(true);
+    var icon = document.getElementById("syncIcon");
+    icon.classList.add("animate-spin");
+
+    google.script.run
+      .withSuccessHandler(function(data) {
+        icon.classList.remove("animate-spin");
+        if (data.success) {
+          dashData = data;
+          renderAll();
+          if (data.lastUpdated) {
+            document.getElementById("lastUpdatedLabel").textContent = "Update: " + data.lastUpdated;
+          }
+        } else {
+          showError(data.error);
+        }
+        showLoading(false);
+      })
+      .withFailureHandler(function(err) {
+        icon.classList.remove("animate-spin");
+        showError(err.message || "Terjadi kesalahan saat mengambil data.");
+        showLoading(false);
+      })
+      .getDataDashboard();
+  }
+
+  function showLoading(visible) {
+    document.getElementById("loadingOverlay").style.display = visible ? "flex" : "none";
+  }
+
+  function showError(msg) {
+    alert("Error: " + msg);
+  }
+
+  // ================================================================
+  // RENDER ALL
+  // ================================================================
+  function renderAll() {
+    var d = dashData.halls["ALL"];
+    renderHomePage(d);
+    renderFooter("home-footer");
+    // sub pages rendered on demand
+  }
+
+  // ================================================================
+  // HOME PAGE RENDER
+  // ================================================================
+  function renderHomePage(d) {
+    renderMetricCards("home-metric-cards", d, dashData.target, "home");
+    renderTimeSeries("home-timeseries-chart", d.timeSeries, "home");
+    renderBarChart("home-bar-chart", d.cardBar, "home");
+    renderGrowthCards("home-growth-cards", d);
+    renderDonut("home-donut-new", "home-donut-new-legend", d.donutNew, "Tahun 2025");
+    renderDonut("home-donut-old", "home-donut-old-legend", d.donutOld, "Tahun 2024");
+    renderSpecialCards("home-special-cards");
+    renderMerchantTable("home-top10-table", d.merchantTop, false);
+    renderMerchantTable("home-bot10-table", d.merchantBot, true);
+    renderMerchantTable("home-onus-table",  d.onUsTop, false);
+    renderMerchantTable("home-offus-table", d.offUsTop, false);
+    renderMerchantTable("home-credit-table",d.creditTop, false);
+    renderMerchantTable("home-debit-table", d.debitTop, false);
+    renderAcqTable("home-acq-table");
+  }
+
+  // ================================================================
+  // SUB PAGE BUILD & RENDER
+  // ================================================================
+  function buildSubPage(pageId) {
+    var hall   = PAGE_HALL_MAP[pageId];
+    var label  = PAGE_LABELS[pageId];
+    var d      = dashData.halls[hall];
+    var prefix = pageId;
+    var container = document.getElementById("page-" + pageId);
+
+    container.innerHTML = subPageHTML(prefix, label, hall);
+
+    // re-init icons
+    if (window.lucide) lucide.createIcons();
+
+    renderMetricCards(prefix+"-metric-cards", d, dashData.target, prefix);
+    renderTimeSeries(prefix+"-timeseries-chart", d.timeSeries, prefix);
+    renderBarChart(prefix+"-bar-chart", d.cardBar, prefix);
+    renderGrowthCards(prefix+"-growth-cards", d);
+    renderDonut(prefix+"-donut-new", prefix+"-donut-new-legend", d.donutNew, "Tahun 2025");
+    renderDonut(prefix+"-donut-old", prefix+"-donut-old-legend", d.donutOld, "Tahun 2024");
+    renderMerchantTable(prefix+"-top10-table", d.merchantTop, false);
+    renderMerchantTable(prefix+"-bot10-table", d.merchantBot, true);
+    renderMerchantTable(prefix+"-onus-table",  d.onUsTop, false);
+    renderMerchantTable(prefix+"-offus-table", d.offUsTop, false);
+    renderMerchantTable(prefix+"-credit-table",d.creditTop, false);
+    renderMerchantTable(prefix+"-debit-table", d.debitTop, false);
+    renderAcqTable(prefix+"-acq-table");
+    renderFooter(prefix+"-footer");
+  }
+
+  function subPageHTML(prefix, label, hall) {
+    return `
+      <div class="w-full">
+        <img src="https://www.imbex.co.id/content/dam/sitebuilder/rxid/imbex/2026/MnM26-hero-banner.png/_jcr_content/renditions/original.image_file.1919.937.file/696721184/MnM26-hero-banner.png"
+             alt="Banner" class="w-full object-cover" style="max-height:180px;" />
+      </div>
+      <div class="px-6 py-6 space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-slate-800">${label}</h1>
+            <p class="text-sm text-slate-400 mt-0.5">Data transaksi terfilter untuk Hall: <strong>${hall}</strong></p>
+          </div>
+          <span class="text-xs bg-indigo-50 text-indigo-600 font-semibold px-3 py-1 rounded-full border border-indigo-100">Live Data</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" id="${prefix}-metric-cards"></div>
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <h2 class="font-semibold text-slate-700 mb-1">Tren Volume Transaksi Harian</h2>
+          <p class="text-xs text-slate-400 mb-4">Tahun 2025 vs Tahun 2024</p>
+          <canvas id="${prefix}-timeseries-chart" height="110"></canvas>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <h2 class="font-semibold text-slate-700 mb-1">Volume per Tipe Kartu (Stacked ON US / OFF US)</h2>
+          <p class="text-xs text-slate-400 mb-4">Tahun 2025 vs Tahun 2024</p>
+          <canvas id="${prefix}-bar-chart" height="120"></canvas>
+        </div>
+        <div>
+          <h2 class="font-semibold text-slate-700 mb-3">Growth Year-on-Year</h2>
+          <div class="grid grid-cols-2 xl:grid-cols-4 gap-4" id="${prefix}-growth-cards"></div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-white rounded-2xl shadow-sm p-5">
+            <h2 class="font-semibold text-slate-700 mb-1">Frekuensi per Alat Bayar — Tahun 2025</h2>
+            <p class="text-xs text-slate-400 mb-4">Distribusi transaksi berdasarkan jenis kartu</p>
+            <div class="flex items-center gap-6">
+              <div class="w-48 h-48 flex-shrink-0"><canvas id="${prefix}-donut-new"></canvas></div>
+              <div id="${prefix}-donut-new-legend" class="flex-1 space-y-2 text-sm"></div>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl shadow-sm p-5">
+            <h2 class="font-semibold text-slate-700 mb-1">Frekuensi per Alat Bayar — Tahun 2024</h2>
+            <p class="text-xs text-slate-400 mb-4">Distribusi transaksi berdasarkan jenis kartu</p>
+            <div class="flex items-center gap-6">
+              <div class="w-48 h-48 flex-shrink-0"><canvas id="${prefix}-donut-old"></canvas></div>
+              <div id="${prefix}-donut-old-legend" class="flex-1 space-y-2 text-sm"></div>
+            </div>
+          </div>
+        </div>
+        <!-- Tables -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-white rounded-2xl shadow-sm p-5">
+            <h3 class="font-semibold text-slate-700 mb-3 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-500"></span> Top 10 Merchant (Volume Tertinggi)</h3>
+            <div class="table-scroll"><table id="${prefix}-top10-table" class="data-table w-full text-xs"></table></div>
+          </div>
+          <div class="bg-white rounded-2xl shadow-sm p-5">
+            <h3 class="font-semibold text-slate-700 mb-3 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-red-400"></span> 10 Loser Merchant (Volume Terendah)</h3>
+            <div class="table-scroll"><table id="${prefix}-bot10-table" class="data-table w-full text-xs"></table></div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-white rounded-2xl shadow-sm p-5">
+            <h3 class="font-semibold text-slate-700 mb-3"><span class="badge-onus text-[10px] font-semibold px-2 py-0.5 rounded-full">ON US</span> Top 10 Transaksi</h3>
+            <div class="table-scroll"><table id="${prefix}-onus-table" class="data-table w-full text-xs"></table></div>
+          </div>
+          <div class="bg-white rounded-2xl shadow-sm p-5">
+            <h3 class="font-semibold text-slate-700 mb-3"><span class="badge-offus text-[10px] font-semibold px-2 py-0.5 rounded-full">OFF US</span> Top 10 Transaksi</h3>
+            <div class="table-scroll"><table id="${prefix}-offus-table" class="data-table w-full text-xs"></table></div>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-white rounded-2xl shadow-sm p-5">
+            <h3 class="font-semibold text-slate-700 mb-3"><span class="badge-credit text-[10px] font-semibold px-2 py-0.5 rounded-full">Credit</span> Top 10 Transaksi</h3>
+            <div class="table-scroll"><table id="${prefix}-credit-table" class="data-table w-full text-xs"></table></div>
+          </div>
+          <div class="bg-white rounded-2xl shadow-sm p-5">
+            <h3 class="font-semibold text-slate-700 mb-3"><span class="badge-debit text-[10px] font-semibold px-2 py-0.5 rounded-full">Debit</span> Top 10 Transaksi</h3>
+            <div class="table-scroll"><table id="${prefix}-debit-table" class="data-table w-full text-xs"></table></div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <h3 class="font-semibold text-slate-700 mb-3">Ringkasan Data Akuisisi Merchant (Semua Hall)</h3>
+          <div class="table-scroll"><table id="${prefix}-acq-table" class="data-table w-full text-xs"></table></div>
+        </div>
+      </div>
+      <footer id="${prefix}-footer"></footer>
+    `;
+  }
+
+  // ================================================================
+  // METRIC CARDS
+  // ================================================================
+  function renderMetricCards(containerId, d, target, prefix) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+
+    var sparkVolSvg  = buildSparklineSVG(d.sparkVol);
+    var sparkFreqSvg = buildSparklineSVG(d.sparkFreq);
+
+    var cards = [
+      {
+        label:  "Grand Total Sales Volume",
+        value:  "Rp " + formatNumber(d.totalVolNew),
+        sub:    "Tahun 2025",
+        icon:   "trending-up",
+        color:  "indigo",
+        spark:  sparkVolSvg
+      },
+      {
+        label:  "Achievement All Day",
+        value:  d.achievement.toFixed(2) + "%",
+        sub:    "Dari Target Tahun 2025",
+        icon:   "target",
+        color:  d.achievement >= 100 ? "green" : "amber",
+        spark:  buildProgressSVG(d.achievement)
+      },
+      {
+        label:  "Total Frekuensi Transaksi",
+        value:  formatNumber(d.totalFreqNew) + " trx",
+        sub:    "Tahun 2025",
+        icon:   "activity",
+        color:  "blue",
+        spark:  sparkFreqSvg
+      },
+      {
+        label:  "Target Tahunan",
+        value:  "Rp " + formatNumber(target),
+        sub:    "Tahun 2025",
+        icon:   "flag",
+        color:  "purple",
+        spark:  ""
+      }
+    ];
+
+    var colorMap = {
+      indigo: { bg:"bg-indigo-50", text:"text-indigo-600", icon:"text-indigo-500" },
+      green:  { bg:"bg-emerald-50",text:"text-emerald-600",icon:"text-emerald-500" },
+      amber:  { bg:"bg-amber-50",  text:"text-amber-600",  icon:"text-amber-500" },
+      blue:   { bg:"bg-blue-50",   text:"text-blue-600",   icon:"text-blue-500" },
+      purple: { bg:"bg-violet-50", text:"text-violet-600", icon:"text-violet-500" }
+    };
+
+    container.innerHTML = cards.map(function(c) {
+      var cm = colorMap[c.color] || colorMap.indigo;
+      return `
+        <div class="metric-card bg-white rounded-2xl shadow-sm p-5 flex flex-col gap-3">
+          <div class="flex items-start justify-between">
+            <div class="${cm.bg} rounded-xl p-2.5">
+              <i data-lucide="${c.icon}" class="w-5 h-5 ${cm.icon}"></i>
+            </div>
+            <div class="flex-shrink-0">${c.spark}</div>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400 font-medium">${c.label}</p>
+            <p class="text-xl font-bold text-slate-800 mt-0.5">${c.value}</p>
+            <p class="text-xs text-slate-400 mt-0.5">${c.sub}</p>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    if (window.lucide) lucide.createIcons();
+  }
+
+  // Sparkline mini SVG
+  function buildSparklineSVG(data) {
+    if (!data || data.length === 0) return "";
+    var w = 80, h = 36, pad = 4;
+    var max = Math.max.apply(null, data) || 1;
+    var min = Math.min.apply(null, data);
+    var range = max - min || 1;
+    var pts = data.map(function(v, i) {
+      var x = pad + (i / (data.length - 1)) * (w - pad * 2);
+      var y = h - pad - ((v - min) / range) * (h - pad * 2);
+      return x.toFixed(1) + "," + y.toFixed(1);
+    });
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+      <polyline points="${pts.join(" ")}" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+  }
+
+  // Progress arc SVG
+  function buildProgressSVG(pct) {
+    var clamped = Math.min(100, Math.max(0, pct));
+    var r = 16, circ = 2 * Math.PI * r;
+    var dash = (clamped / 100) * circ;
+    var color = pct >= 100 ? "#16a34a" : "#f59e0b";
+    return `<svg width="44" height="44" viewBox="0 0 44 44">
+      <circle cx="22" cy="22" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+      <circle cx="22" cy="22" r="${r}" fill="none" stroke="${color}" stroke-width="3"
+        stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}" stroke-dashoffset="${circ/4}"
+        stroke-linecap="round" transform="rotate(-90 22 22)"/>
+      <text x="22" y="26" text-anchor="middle" font-size="8" font-weight="700" fill="${color}">${Math.round(pct)}%</text>
+    </svg>`;
+  }
+
+  // ================================================================
+  // TIME SERIES CHART
+  // ================================================================
+  function renderTimeSeries(canvasId, ts, prefix) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    if (chartInstances[canvasId]) { chartInstances[canvasId].destroy(); }
+
+    var allDates = {};
+    (ts.new || []).forEach(function(d){ allDates[d.date] = true; });
+    (ts.old || []).forEach(function(d){ allDates[d.date] = true; });
+    var labels = Object.keys(allDates).sort();
+
+    var newMap = {}, oldMap = {};
+    (ts.new || []).forEach(function(d){ newMap[d.date] = d.volume; });
+    (ts.old || []).forEach(function(d){ oldMap[d.date] = d.volume; });
+
+    chartInstances[canvasId] = new Chart(canvas.getContext("2d"), {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Tahun 2025",
+            data: labels.map(function(d){ return newMap[d] || 0; }),
+            borderColor: "#6366f1",
+            backgroundColor: "rgba(99,102,241,0.08)",
+            borderWidth: 2.5,
+            pointRadius: 3,
+            pointBackgroundColor: "#6366f1",
+            tension: 0.4,
+            fill: true
+          },
+          {
+            label: "Tahun 2024",
+            data: labels.map(function(d){ return oldMap[d] || 0; }),
+            borderColor: "#94a3b8",
+            backgroundColor: "rgba(148,163,184,0.05)",
+            borderWidth: 2,
+            pointRadius: 2,
+            borderDash: [5,3],
+            tension: 0.4,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { font: { family: "Plus Jakarta Sans", size: 11 } } } },
+        scales: {
+          x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { display: false } },
+          y: { ticks: { font: { size: 10 }, callback: function(v){ return "Rp "+shortNum(v); } }, grid: { color: "#f1f5f9" } }
+        }
+      }
+    });
+  }
+
+  // ================================================================
+  // BAR CHART (Stacked per CardType x TrxType)
+  // ================================================================
+  function renderBarChart(canvasId, cardBar, prefix) {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    if (chartInstances[canvasId]) { chartInstances[canvasId].destroy(); }
+
+    var cardTypes = cardBar.cardTypes || [];
+    var labels = [];
+    cardTypes.forEach(function(ct) {
+      labels.push(ct + " (2025)");
+      labels.push(ct + " (2024)");
+    });
+
+    var onUsNewData   = cardTypes.map(function(ct){ return (cardBar.new[ct] && cardBar.new[ct]["ON US"])  || 0; });
+    var offUsNewData  = cardTypes.map(function(ct){ return (cardBar.new[ct] && cardBar.new[ct]["OFF US"]) || 0; });
+    var onUsOldData   = cardTypes.map(function(ct){ return (cardBar.old[ct] && cardBar.old[ct]["ON US"])  || 0; });
+    var offUsOldData  = cardTypes.map(function(ct){ return (cardBar.old[ct] && cardBar.old[ct]["OFF US"]) || 0; });
+
+    // Interleave new/old per cardtype for grouped display
+    var finalLabels = [];
+    var onUsAll = [], offUsAll = [];
+    cardTypes.forEach(function(ct, i) {
+      finalLabels.push(ct + "\n(2025)");
+      finalLabels.push(ct + "\n(2024)");
+      onUsAll.push(onUsNewData[i]);
+      onUsAll.push(onUsOldData[i]);
+      offUsAll.push(offUsNewData[i]);
+      offUsAll.push(offUsOldData[i]);
+    });
+
+    chartInstances[canvasId] = new Chart(canvas.getContext("2d"), {
+      type: "bar",
+      data: {
+        labels: finalLabels,
+        datasets: [
+          {
+            label: "ON US",
+            data: onUsAll,
+            backgroundColor: "rgba(99,102,241,0.85)",
+            borderRadius: 4,
+            stack: "trx"
+          },
+          {
+            label: "OFF US",
+            data: offUsAll,
+            backgroundColor: "rgba(167,139,250,0.7)",
+            borderRadius: 4,
+            stack: "trx"
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { font: { family: "Plus Jakarta Sans", size: 11 } } }
+        },
+        scales: {
+          x: { stacked: true, ticks: { font: { size: 9 } }, grid: { display: false } },
+          y: { stacked: true, ticks: { font: { size: 10 }, callback: function(v){ return "Rp "+shortNum(v); } }, grid: { color: "#f1f5f9" } }
+        }
+      }
+    });
+  }
+
+  // ================================================================
+  // GROWTH CARDS
+  // ================================================================
+  function renderGrowthCards(containerId, d) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    var gd = d.growthDays || {};
+    var items = [
+      { label: "Growth YoY (FD)", value: d.growthFD },
+      { label: "Growth YoY (Day 1)", value: (gd.day1 && gd.day1.growth) || 0 },
+      { label: "Growth YoY (Day 2)", value: (gd.day2 && gd.day2.growth) || 0 },
+      { label: "Growth YoY (Day 3)", value: (gd.day3 && gd.day3.growth) || 0 }
+    ];
+    container.innerHTML = items.map(function(item) {
+      var isPos  = item.value >= 0;
+      var cls    = isPos ? "growth-pos" : "growth-neg";
+      var icon   = isPos ? "trending-up" : "trending-down";
+      var arrow  = isPos ? "▲" : "▼";
+      var bgCls  = isPos ? "bg-emerald-50 border-emerald-100" : "bg-red-50 border-red-100";
+      return `
+        <div class="bg-white rounded-2xl shadow-sm p-5 border border-slate-100">
+          <p class="text-xs text-slate-400 font-medium mb-2">${item.label}</p>
+          <div class="flex items-center gap-2">
+            <span class="${bgCls} border rounded-lg p-1.5">
+              <i data-lucide="${icon}" class="w-4 h-4 ${cls}"></i>
+            </span>
+            <span class="text-2xl font-bold ${cls}">${arrow} ${Math.abs(item.value).toFixed(2)}%</span>
+          </div>
+        </div>
+      `;
+    }).join("");
+    if (window.lucide) lucide.createIcons();
+  }
+
+  // ================================================================
+  // DOUGHNUT CHART
+  // ================================================================
+  function renderDonut(canvasId, legendId, donutData, yearLabel) {
+    var canvas = document.getElementById(canvasId);
+    var legendEl = document.getElementById(legendId);
+    if (!canvas) return;
+    if (chartInstances[canvasId]) { chartInstances[canvasId].destroy(); }
+
+    var cardTypes = ["Credit","Debit","QR Credit","QR Non Credit","TapCash"];
+    var values    = cardTypes.map(function(ct){ return donutData[ct] || 0; });
+    var total     = values.reduce(function(s,v){ return s+v; }, 0);
+
+    chartInstances[canvasId] = new Chart(canvas.getContext("2d"), {
+      type: "doughnut",
+      data: {
+        labels: cardTypes,
+        datasets: [{
+          data: values,
+          backgroundColor: PASTEL,
+          borderWidth: 2,
+          borderColor: "#fff",
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        cutout: "68%",
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                var pct = total > 0 ? ((ctx.raw / total)*100).toFixed(1) : "0.0";
+                return ctx.label + ": " + ctx.raw + " trx (" + pct + "%)";
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (legendEl) {
+      legendEl.innerHTML = cardTypes.map(function(ct, i) {
+        var v = values[i];
+        var pct = total > 0 ? ((v/total)*100).toFixed(1) : "0.0";
+        return `
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:${PASTEL[i]}"></span>
+              <span class="text-xs text-slate-600 truncate">${ct}</span>
+            </div>
+            <span class="text-xs font-semibold text-slate-700 flex-shrink-0">${formatNumber(v)} <span class="text-slate-400 font-normal">(${pct}%)</span></span>
+          </div>
+        `;
+      }).join("") + `<div class="border-t border-slate-100 pt-2 mt-2">
+        <div class="flex justify-between text-xs font-bold text-slate-700">
+          <span>Total</span><span>${formatNumber(total)} trx</span>
+        </div>
+      </div>`;
+    }
+  }
+
+  // ================================================================
+  // SPECIAL CARDS (Akuisisi & Ticket)
+  // ================================================================
+  function renderSpecialCards(containerId) {
+    var container = document.getElementById(containerId);
+    if (!container || !dashData) return;
+
+    var acq    = dashData.acquisition || [];
+    var ticket = dashData.ticket || {};
+    var totalAcq = acq.reduce(function(s,r){ return s + (r.totalAkuisisi || 0); }, 0);
+
+    var cards = [
+      {
+        label: "Total Akuisisi Merchant",
+        value: formatNumber(totalAcq) + " merchant",
+        sub:   "Dari All Hall",
+        icon:  "store",
+        color: "#6366f1"
+      },
+      {
+        label: "Total Volume Penjualan Tiket",
+        value: "Rp " + formatNumber(ticket.totalVol || 0),
+        sub:   "Dari EDC dan QRIS",
+        icon:  "ticket",
+        color: "#f59e0b"
+      },
+      {
+        label: "Total Tiket Terjual",
+        value: formatNumber(ticket.totalQty || 0) + " tiket",
+        sub:   "Dari EDC dan QRIS",
+        icon:  "hash",
+        color: "#10b981"
+      }
+    ];
+
+    container.innerHTML = cards.map(function(c) {
+      return `
+        <div class="metric-card bg-white rounded-2xl shadow-sm p-5 flex items-center gap-4">
+          <div class="rounded-xl p-3 flex-shrink-0" style="background:${c.color}18">
+            <i data-lucide="${c.icon}" class="w-6 h-6" style="color:${c.color}"></i>
+          </div>
+          <div>
+            <p class="text-xs text-slate-400 font-medium">${c.label}</p>
+            <p class="text-lg font-bold text-slate-800 mt-0.5">${c.value}</p>
+            <p class="text-xs text-slate-400">${c.sub}</p>
+          </div>
+        </div>
+      `;
+    }).join("");
+    if (window.lucide) lucide.createIcons();
+  }
+
+  // ================================================================
+  // MERCHANT TABLE
+  // ================================================================
+  function renderMerchantTable(tableId, rows, isLoser) {
+    var table = document.getElementById(tableId);
+    if (!table) return;
+    if (!rows || rows.length === 0) {
+      table.innerHTML = "<tr><td class='py-4 text-center text-slate-400 text-xs' colspan='4'>Tidak ada data</td></tr>";
+      return;
+    }
+    var hdrClass = isLoser ? "text-red-500" : "text-indigo-600";
+    table.innerHTML = `
+      <thead>
+        <tr class="border-b border-slate-100">
+          <th class="text-left py-2 px-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wide">#</th>
+          <th class="text-left py-2 px-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Merchant</th>
+          <th class="text-right py-2 px-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Volume</th>
+          <th class="text-right py-2 px-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Frek.</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(function(r, i) {
+          return `
+            <tr class="border-b border-slate-50">
+              <td class="py-2 px-2 font-medium ${hdrClass}">${i+1}</td>
+              <td class="py-2 px-2 text-slate-700 font-medium max-w-xs truncate">${escHtml(r.name || r.id)}</td>
+              <td class="py-2 px-2 text-right font-semibold text-slate-800">Rp ${formatNumber(r.volume)}</td>
+              <td class="py-2 px-2 text-right text-slate-500">${formatNumber(r.freq)}</td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    `;
+  }
+
+  // ================================================================
+  // ACQUISITION TABLE
+  // ================================================================
+  function renderAcqTable(tableId) {
+    var table = document.getElementById(tableId);
+    if (!table || !dashData) return;
+    var rows = dashData.acquisition || [];
+
+    var cols = [
+      { key: "hall",          label: "Hall" },
+      { key: "jumlahTenant",  label: "Jml Tenant" },
+      { key: "totalDoneFU",   label: "Done FU" },
+      { key: "distributor",   label: "Distributor" },
+      { key: "tokoOnline",    label: "Toko Online" },
+      { key: "offlinePot",    label: "Offline/Potensi" },
+      { key: "existingMer",   label: "Existing" },
+      { key: "brandPartner",  label: "Brand Partner" },
+      { key: "tidakBerminat", label: "Tdk Berminat" },
+      { key: "gap",           label: "GAP" },
+      { key: "totalAkuisisi", label: "Total Akuisisi" }
+    ];
+
+    var totals = {};
+    cols.slice(1).forEach(function(c){ totals[c.key] = 0; });
+    rows.forEach(function(r) {
+      cols.slice(1).forEach(function(c){ totals[c.key] += (r[c.key] || 0); });
+    });
+
+    table.innerHTML = `
+      <thead>
+        <tr class="border-b border-slate-100 bg-slate-50">
+          ${cols.map(function(c){ return `<th class="text-left py-2 px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wide whitespace-nowrap">${c.label}</th>`; }).join("")}
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(function(r) {
+          return `<tr class="border-b border-slate-50">
+            ${cols.map(function(c) {
+              var val = r[c.key];
+              var display = c.key === "hall" ? `<span class="font-semibold text-slate-700">${escHtml(val||"")}</span>` : `<span class="text-slate-600">${formatNumber(val||0)}</span>`;
+              return `<td class="py-2 px-3">${display}</td>`;
+            }).join("")}
+          </tr>`;
+        }).join("")}
+        <tr class="border-t-2 border-indigo-200 bg-indigo-50 font-bold">
+          <td class="py-2 px-3 text-indigo-700 text-[10px] uppercase font-bold">TOTAL</td>
+          ${cols.slice(1).map(function(c){ return `<td class="py-2 px-3 text-indigo-700 font-bold">${formatNumber(totals[c.key])}</td>`; }).join("")}
+        </tr>
+      </tbody>
+    `;
+  }
+
+  // ================================================================
+  // FOOTER
+  // ================================================================
+  function renderFooter(footerId) {
+    var footer = document.getElementById(footerId);
+    if (!footer) return;
+    footer.className = "mt-10 bg-slate-100 border-t border-slate-200 px-6 py-8";
+    footer.innerHTML = `
+      <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- LEFT -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-3">
+            <a href="https://www.bni.co.id" target="_blank" rel="noopener noreferrer">
+              <img src="https://crystalpng.com/wp-content/uploads/2025/12/Bank-Negara-Indonesia-Logo-01.png"
+                   alt="Logo BNI" class="h-9 object-contain hover:opacity-80 transition-opacity" />
+            </a>
+            <span class="text-sm font-semibold text-slate-700">PT Bank Negara Indonesia (Persero) Tbk.</span>
+          </div>
+          <p class="text-xs text-slate-500 leading-relaxed">BNI berizin dan diawasi oleh Otoritas Jasa Keuangan (OJK) &amp; Bank Indonesia (BI).</p>
+          <p class="text-xs text-slate-500 leading-relaxed">BNI merupakan peserta penjaminan Lembaga Penjamin Simpanan (LPS). Maksimum nilai simpanan yang dijamin LPS per Nasabah adalah Rp 2 miliar.</p>
+          <!-- Social Media -->
+          <div class="flex items-center gap-3 pt-1">
+            <a href="https://x.com/BNI" target="_blank" rel="noopener noreferrer"
+               class="w-8 h-8 rounded-full bg-slate-200 hover:bg-indigo-100 flex items-center justify-center transition-colors" title="X (Twitter)">
+              <svg class="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L2.06 2.25h6.638l4.26 5.63L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="https://www.facebook.com/BNIUntukIndonesia" target="_blank" rel="noopener noreferrer"
+               class="w-8 h-8 rounded-full bg-slate-200 hover:bg-blue-100 flex items-center justify-center transition-colors" title="Facebook">
+              <svg class="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            <a href="https://www.linkedin.com/company/bni" target="_blank" rel="noopener noreferrer"
+               class="w-8 h-8 rounded-full bg-slate-200 hover:bg-blue-100 flex items-center justify-center transition-colors" title="LinkedIn">
+              <svg class="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            </a>
+            <a href="https://www.instagram.com/bni46/" target="_blank" rel="noopener noreferrer"
+               class="w-8 h-8 rounded-full bg-slate-200 hover:bg-pink-100 flex items-center justify-center transition-colors" title="Instagram">
+              <svg class="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            </a>
+            <a href="https://www.youtube.com/@BNI1946" target="_blank" rel="noopener noreferrer"
+               class="w-8 h-8 rounded-full bg-slate-200 hover:bg-red-100 flex items-center justify-center transition-colors" title="YouTube">
+              <svg class="w-4 h-4 text-slate-600" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            </a>
+          </div>
+        </div>
+        <!-- RIGHT -->
+        <div class="space-y-2 text-xs text-slate-500">
+          <p class="font-semibold text-slate-700 text-sm">Retail Digital Product &amp; Partnership Division (RPP)</p>
+          <p>Retail Transaction Product Roll Out Department</p>
+          <p>Menara BNI Pejompongan, 16th Floor, Jl. Pejompongan Raya No. 7,<br/>Tanah Abang, Jakarta Pusat - 10210 | Indonesia</p>
+          <p><span class="font-medium text-slate-600">Email:</span> <a href="mailto:RPP.RTR@bni.co.id" class="text-indigo-600 hover:underline">RPP.RTR@bni.co.id</a></p>
+          <p><span class="font-medium text-slate-600">Hotline:</span> <a href="tel:1500146" class="text-indigo-600 hover:underline">1500146</a></p>
+          <div class="pt-4 mt-4 border-t border-slate-200">
+            <p class="text-[11px] text-slate-400">© Hak Cipta PT Bank Negara Indonesia (Persero), Tbk, Dept. RTR Divisi RPP. Created by HQ/63927</p>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ================================================================
+  // UTILITIES
+  // ================================================================
+  function formatNumber(n) {
+    if (n === undefined || n === null) return "0";
+    return Math.round(n).toLocaleString("id-ID");
+  }
+
+  function shortNum(n) {
+    if (n >= 1e12) return (n/1e12).toFixed(1) + "T";
+    if (n >= 1e9)  return (n/1e9).toFixed(1)  + "M";
+    if (n >= 1e6)  return (n/1e6).toFixed(1)  + "Jt";
+    if (n >= 1e3)  return (n/1e3).toFixed(1)  + "Rb";
+    return n;
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;");
+  }
+
+  // ================================================================
+  // INIT
+  // ================================================================
+  document.addEventListener("DOMContentLoaded", function() {
+    lucide.createIcons();
+    syncData();
+  });
+  </script>
+</body>
+</html>
